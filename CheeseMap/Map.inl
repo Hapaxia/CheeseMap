@@ -110,8 +110,6 @@ namespace cheesemap
 
 inline Map::Map()
 	: m_texture{ nullptr }
-	, m_vertices()
-	, m_isUpdateRequired{ false }
 	, m_view()
 	, m_depthMultiplier{ 1.f }
 	, m_vanishingPointOffsetFromCenter{ 0.f, 0.f }
@@ -121,6 +119,9 @@ inline Map::Map()
 	, m_rangeMaxZ{ 0u }
 	, m_rangeMinDepth{ 0.f }
 	, m_rangeMaxDepth{ 0.f }
+	, m_depthOffset{ 0.f }
+	, m_isUpdateRequired{ false }
+	, m_vertices()
 {
 
 }
