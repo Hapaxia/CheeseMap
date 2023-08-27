@@ -1,4 +1,4 @@
-# Cheese Map
+![Cheese Map logo](https://i.imgur.com/YukQl9v.png "Cheese Map logo")
 
 Welcome to Cheese Map!  
 by [Hapaxia](http://github.com/Hapaxia)
