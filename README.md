@@ -5,7 +5,7 @@ by [Hapaxia](http://github.com/Hapaxia)
 
 Cheese Map is a drawable layered tile map for SFML, designed to simplify drawing most 2D maps.
 
-It's also fully header-only so no library compilation needed; simply just include it (Map).
+It's also fully header-only so no library compilation needed; simply just include it.
 
 A couple of test videos created during development (click the images to view the video on YouTube):
 
