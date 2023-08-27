@@ -21,6 +21,7 @@
 *.bak
 priv*.*
 priv_*.*
+wiki_*.*
 
 licence for header.txt
 
