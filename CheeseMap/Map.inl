@@ -5,7 +5,7 @@
 //
 // Map
 //
-// Copyright(c) 2023-2024 M.J.Silk
+// Copyright(c) 2023-2025 M.J.Silk
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -204,6 +204,201 @@ inline float Map::getDepthOffset() const
 	return m_depthOffset;
 }
 
+inline sf::Vector2f Map::getLocalCoord(const sf::Vector2f coord) const
+{
+	return getInverseTransform().transformPoint(coord);
+}
+
+inline Map::GridTileId Map::getGridTileIdAtLocalCoord(const sf::Vector2f localCoord) const
+{
+	GridTileId gridTileId{};
+	const std::size_t numberOfGrids{ grids.size() };
+	if (numberOfGrids == 0u)
+		return gridTileId;
+
+	bool tileFound{ false };
+
+	std::size_t zOrder{ 0u };
+
+	for (std::size_t g{ 0u }; g < numberOfGrids; ++g)
+	{
+		const Grid& grid{ grids[g] };
+		if ((!grid.isActive) || (grid.depth < 0.f))
+			continue;
+
+		if (grid.zOrder < zOrder)
+			continue;
+
+		const std::size_t numberOfTileIds{ grid.tileIds.size() };
+		for (std::size_t t{ 0u }; t < numberOfTileIds; ++t)
+		{
+			const sf::Vector2<std::size_t> location{ t % grid.rowWidth, t / grid.rowWidth };
+			
+			sf::Vector2f topLeft{ grid.position };
+
+			topLeft.x += static_cast<float>(location.x * grid.tileSize.x);
+			topLeft.y += static_cast<float>(location.y * grid.tileSize.y);
+
+			const sf::FloatRect tileRect{ topLeft, grid.tileSize };
+
+			if (tileRect.contains(localCoord))
+			{
+				zOrder = grids[g].zOrder;
+				gridTileId.gridIndex = g;
+				gridTileId.tileIndex = t;
+				tileFound = true;
+				break;
+			}
+		}
+	}
+
+	if (!tileFound)
+		gridTileId.gridIndex = grids.size();
+
+	return gridTileId;
+}
+
+inline std::vector<Map::GridTileId> Map::getGridTileIdsAtLocalCoord(sf::Vector2f localCoord) const
+{
+	std::vector<GridTileId> gridTileIds{};
+	const std::size_t numberOfGrids{ grids.size() };
+	if (numberOfGrids == 0u)
+		return gridTileIds;
+
+	for (std::size_t g{ 0u }; g < numberOfGrids; ++g)
+	{
+		const Grid& grid{ grids[g] };
+		if ((!grid.isActive) || (grid.depth < 0.f))
+			continue;
+
+		const std::size_t numberOfTileIds{ grid.tileIds.size() };
+		for (std::size_t t{ 0u }; t < numberOfTileIds; ++t)
+		{
+			const sf::Vector2<std::size_t> location{ t % grid.rowWidth, t / grid.rowWidth };
+
+			sf::Vector2f topLeft{ grid.position };
+
+			topLeft.x += static_cast<float>(location.x * grid.tileSize.x);
+			topLeft.y += static_cast<float>(location.y * grid.tileSize.y);
+
+			const sf::FloatRect tileRect{ topLeft, grid.tileSize };
+
+			if (tileRect.contains(localCoord))
+			{
+				GridTileId gridTileId{};
+				gridTileId.gridIndex = g;
+				gridTileId.tileIndex = t;
+				gridTileIds.push_back(gridTileId);
+				break;
+			}
+		}
+	}
+
+	return gridTileIds;
+}
+
+inline Map::LayerTileId Map::getLayerTileIdAtLocalCoord(sf::Vector2f localCoord) const
+{
+	LayerTileId layerTileId{};
+	const std::size_t numberOfLayers{ layers.size() };
+	if (numberOfLayers == 0u)
+		return layerTileId;
+
+	bool tileFound{ false };
+
+	std::size_t zOrder{ 0u };
+
+	for (std::size_t l{ 0u }; l < numberOfLayers; ++l)
+	{
+		const Layer& layer{ layers[l] };
+		if (!layer.isActive || (layer.depth < 0.f))
+			continue;
+
+		if (layer.zOrder < zOrder)
+			continue;
+
+		const std::size_t numberOfTiles{ layer.tiles.size() };
+		for (std::size_t t{ 0u }; t < numberOfTiles; ++t)
+		{
+			const cm::Tile& tile{ layer.tiles[t] };
+			if ((!layer.isActive) || (!(layer.depth < 0.f)))
+				continue;
+
+			sf::Vector2f topLeft{ layer.offset + tile.position };
+
+			sf::Vector2f tileSize{ tile.size };
+			if (tile.isTemplate)
+			{
+				const sf::Vector2f tileTemplateSize{ tileTemplates[tile.id].size };
+				tileSize.x *= tileTemplateSize.x;
+				tileSize.y *= tileTemplateSize.y;
+			}
+
+			const sf::FloatRect tileRect{ topLeft, tileSize };
+
+			if (tileRect.contains(localCoord))
+			{
+				zOrder = layers[l].zOrder;
+				layerTileId.layerIndex = l;
+				layerTileId.tileIndex = t;
+				tileFound = true;
+				break;
+			}
+		}
+	}
+
+	if (!tileFound)
+		layerTileId.layerIndex = layers.size();
+
+	return layerTileId;
+}
+
+inline std::vector<Map::LayerTileId> Map::getLayerTileIdsAtLocalCoord(sf::Vector2f localCoord) const
+{
+	std::vector<LayerTileId> layerTileIds{};
+	const std::size_t numberOfLayers{ layers.size() };
+	if (numberOfLayers == 0u)
+		return layerTileIds;
+
+	for (std::size_t l{ 0u }; l < numberOfLayers; ++l)
+	{
+		const Layer& layer{ layers[l] };
+		if ((!layer.isActive) || (layer.depth < 0.f))
+			continue;
+
+		const std::size_t numberOfTiles{ layer.tiles.size() };
+		for (std::size_t t{ 0u }; t < numberOfTiles; ++t)
+		{
+			const cm::Tile& tile{ layer.tiles[t] };
+			if (!tile.isActive)
+				continue;
+
+			sf::Vector2f topLeft{ layer.offset + tile.position };
+
+			sf::Vector2f tileSize{ tile.size };
+			if (tile.isTemplate)
+			{
+				const sf::Vector2f tileTemplateSize{ tileTemplates[tile.id].size };
+				tileSize.x *= tileTemplateSize.x;
+				tileSize.y *= tileTemplateSize.y;
+			}
+
+			const sf::FloatRect tileRect{ topLeft, tileSize };
+
+			if (tileRect.contains(localCoord))
+			{
+				LayerTileId layerTileId{};
+				layerTileId.layerIndex = l;
+				layerTileId.tileIndex = t;
+				layerTileIds.push_back(layerTileId);
+				break;
+			}
+		}
+	}
+
+	return layerTileIds;
+}
+
 
 
 
@@ -270,14 +465,14 @@ inline void Map::priv_update() const
 	// an axis-aligned rectangle that encompasses view rectangle even if rotated
 	sf::FloatRect effectiveViewRectangle{ viewCenter - viewHalfSize, viewSize };
 
-	if (m_view.getRotation() != 0.f)
+	if (m_view.getRotation().asDegrees() != 0.f)
 	{
 		auto rotatePoint = [](sf::Vector2f& p, const float cos, const float sin) { p = { p.x * cos - p.y * sin, p.y * cos + p.x * sin }; };
 
 		sf::Vector2f topLeft{ -viewHalfSize };
 		sf::Vector2f topRight{ -topLeft.x, topLeft.y };
 
-		const float angle{ m_view.getRotation() / 180.f * 3.14159265f };
+		const float angle{ m_view.getRotation().asRadians() };
 		const float sin{ std::sin(angle) };
 		const float cos{ std::cos(angle) };
 
@@ -356,9 +551,9 @@ inline void Map::priv_update() const
 					isAnActiveTile = true;
 			}
 
-			tileBounds = { pointWithDepth(tileBounds.getPosition(), depthRatio), pointDepthScale(tileBounds.getSize(), depthRatio) };
+			tileBounds = { pointWithDepth(tileBounds.position, depthRatio), pointDepthScale(tileBounds.size, depthRatio) };
 
-			if (!effectiveViewRectangle.intersects(tileBounds))
+			if (!effectiveViewRectangle.findIntersection(tileBounds))
 				isAnActiveTile = false;
 
 			if (isAnActiveTile)
@@ -385,12 +580,12 @@ inline void Map::priv_update() const
 
 		for (std::size_t t{ 0u }, numberOfTiles{ grids[g].tileIds.size() }; t < numberOfTiles; ++t)
 		{
-			sf::Vector2u tileLocation(t % grids[g].rowWidth, t / grids[g].rowWidth);
+			sf::Vector2<std::size_t> tileLocation(t % grids[g].rowWidth, t / grids[g].rowWidth);
 			tileBounds = { { grids[g].position.x + tileLocation.x * grids[g].tileSize.x, grids[g].position.y + tileLocation.y * grids[g].tileSize.y }, grids[g].tileSize };
-			tileBounds = { pointWithDepth(tileBounds.getPosition(), depthRatio), pointDepthScale(tileBounds.getSize(), depthRatio) };
+			tileBounds = { pointWithDepth(tileBounds.position, depthRatio), pointDepthScale(tileBounds.size, depthRatio) };
 			const bool isTileWithinRange{  };
 
-			if ((grids[g].tileIds[t] != grids[g].invisibleId) && effectiveViewRectangle.intersects(tileBounds) && (grids[g].tileIds[t] < numberOfTextureAtlasRectangle))
+			if ((grids[g].tileIds[t] != grids[g].invisibleId) && effectiveViewRectangle.findIntersection(tileBounds) && (grids[g].tileIds[t] < numberOfTextureAtlasRectangle))
 				activeTiles.push_back({ TileId::GroupType::Grid, g, t });
 		}
 	}
@@ -480,8 +675,8 @@ inline void Map::priv_update() const
 			startVertex,
 			pointWithDepth(tile.position, depthRatio),
 			pointWithDepth(tile.position + tile.size, depthRatio),
-			textureAtlas[tile.id].getPosition(),
-			textureAtlas[tile.id].getPosition() + textureAtlas[tile.id].getSize(),
+			textureAtlas[tile.id].position,
+			textureAtlas[tile.id].position + textureAtlas[tile.id].size,
 			color,
 			textureTransform.flipX,
 			textureTransform.flipY,

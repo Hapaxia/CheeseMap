@@ -5,7 +5,7 @@
 //
 // Map
 //
-// Copyright(c) 2023-2024 M.J.Silk
+// Copyright(c) 2023-2025 M.J.Silk
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -47,7 +47,7 @@
 namespace cheesemap
 {
 
-// Cheese Map v1.0.0
+// Cheese Map v1.1.0
 class Map : public sf::Drawable, public sf::Transformable
 {
 public:
@@ -55,6 +55,18 @@ public:
 	std::vector<Layer> layers;
 	std::vector<sf::FloatRect> textureAtlas;
 	std::vector<TileTemplate> tileTemplates;
+
+	struct GridTileId
+	{
+		std::size_t gridIndex{};
+		std::size_t tileIndex{};
+	};
+
+	struct LayerTileId
+	{
+		std::size_t layerIndex{};
+		std::size_t tileIndex{};
+	};
 
 	Map();
 
@@ -76,6 +88,17 @@ public:
 
 	void setDepthOffset(float depthOffset);
 	float getDepthOffset() const;
+
+	sf::Vector2f getLocalCoord(sf::Vector2f coord) const;
+
+	GridTileId getGridTileIdAtLocalCoord(sf::Vector2f localCoord) const;
+	std::vector<GridTileId> getGridTileIdsAtLocalCoord(sf::Vector2f localCoord) const;
+
+	LayerTileId getLayerTileIdAtLocalCoord(sf::Vector2f localCoord) const;
+	std::vector<LayerTileId> getLayerTileIdsAtLocalCoord(sf::Vector2f localCoord) const;
+
+
+
 
 
 
