@@ -18,7 +18,7 @@ A couple of test videos created during development (click the images to view the
 
 ## Note
 Cheese Map requires [SFML].
-> It's designed for the current and latest release (2.6) and has not yet been tested with SFML 3.
+> It's designed for the current and latest release (3.0)
 
 
 
