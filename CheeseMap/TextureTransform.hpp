@@ -40,6 +40,7 @@ struct TextureTransform
 	bool flipX{ false };
 	bool flipY{ false };
 	bool turn{ false }; // clockwise 90 degrees
+	sf::Vector2f texInset{ 0.f, 0.f };
 };
 
 } // namespace cheesemap

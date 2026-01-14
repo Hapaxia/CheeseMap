@@ -47,7 +47,7 @@
 namespace cheesemap
 {
 
-// Cheese Map v1.1.0
+// Cheese Map v1.2.0
 class Map : public sf::Drawable, public sf::Transformable
 {
 public:
@@ -97,6 +97,10 @@ public:
 	LayerTileId getLayerTileIdAtLocalCoord(sf::Vector2f localCoord) const;
 	std::vector<LayerTileId> getLayerTileIdsAtLocalCoord(sf::Vector2f localCoord) const;
 
+	std::size_t getGridTileIndexAtGridLocation(std::size_t gridIndex, sf::Vector2<std::size_t> location) const;
+	std::size_t getGridHeight(std::size_t gridIndex) const;
+
+	bool doesGridBoundsContainCoord(std::size_t gridIndex, sf::Vector2f localCoord) const;
 
 
 

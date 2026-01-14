@@ -46,6 +46,8 @@ struct Layer
 	std::size_t zOrder{ 0u };
 	float depth{ 0.f };
 	sf::Vector2f offset{ 0.f, 0.f };
+	sf::Vector2f texInset{ 0.f, 0.f };
+	sf::Vector2f tileExpand{ 0.f, 0.f };
 	sf::Color color{ sf::Color::White };
 	std::vector<Tile> tiles;
 };

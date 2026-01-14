@@ -39,7 +39,8 @@
 namespace
 {
 
-inline void setQuad(
+inline void setQuad
+(
 	std::vector<sf::Vertex>& vertices,
 	const std::size_t startVertex,
 	const sf::Vector2f topLeft,
@@ -399,6 +400,35 @@ inline std::vector<Map::LayerTileId> Map::getLayerTileIdsAtLocalCoord(sf::Vector
 	return layerTileIds;
 }
 
+inline std::size_t Map::getGridTileIndexAtGridLocation(const std::size_t gridIndex, const sf::Vector2<std::size_t> location) const
+{
+	const std::size_t numberOfGrids{ grids.size() };
+	if ((numberOfGrids == 0u) || (gridIndex >= numberOfGrids))
+		return{};
+
+	return (location.y * grids[gridIndex].rowWidth) + location.x;
+}
+
+inline std::size_t Map::getGridHeight(const std::size_t gridIndex) const
+{
+	return grids[gridIndex].tileIds.size() / grids[gridIndex].rowWidth;
+}
+
+inline bool Map::doesGridBoundsContainCoord(const std::size_t gridIndex, const sf::Vector2f localCoord) const
+{
+	const std::size_t numberOfGrids{ grids.size() };
+	if ((numberOfGrids == 0u) || (gridIndex >= numberOfGrids))
+		return false;
+
+	const Grid& grid{ grids[gridIndex] };
+
+	const sf::Vector2f tileSize{ grid.tileSize };
+	const sf::Vector2f topLeft{ grid.position };
+	const sf::Vector2f bottomRight{ topLeft.x + (grid.rowWidth * tileSize.x), topLeft.y + (getGridHeight(gridIndex) * tileSize.y) };
+
+	return !((localCoord.x < topLeft.x) || (localCoord.y < topLeft.y) || (localCoord.x >= bottomRight.x) || (localCoord.y >= bottomRight.y));
+}
+
 
 
 
@@ -627,10 +657,12 @@ inline void Map::priv_update() const
 		Tile tile;
 		TextureTransform textureTransform;
 		sf::Color color;
+		sf::Vector2f texInset{};
 		switch (activeTile.groupType)
 		{
 		case TileId::GroupType::Grid:
 		{
+			texInset = grids[activeTile.groupIndex].texInset;
 			tile.id = grids[activeTile.groupIndex].tileIds[activeTile.tileIndex];
 			tile.size = grids[activeTile.groupIndex].tileSize;
 			const std::size_t rowWidth{ grids[activeTile.groupIndex].rowWidth };
@@ -640,14 +672,19 @@ inline void Map::priv_update() const
 			auto tt{ std::find_if(grids[activeTile.groupIndex].tileTextureTransforms.begin(), grids[activeTile.groupIndex].tileTextureTransforms.end(),
 				[&](const Grid::TileTextureTransform& ttt) { return ttt.tileIndex == activeTile.tileIndex; }
 				) };
+			tile.expand = grids[activeTile.groupIndex].tileExpand;
 			if (tt != grids[activeTile.groupIndex].tileTextureTransforms.end())
+			{
 				textureTransform = tt->textureTransform;
+				tile.expand += tt->tileExpand;
+			}
 			color = grids[activeTile.groupIndex].color;
 		}
 		break;
 		default:
 		case TileId::GroupType::Layer:
 		{
+			texInset = layers[activeTile.groupIndex].texInset;
 			const Tile& tileControl{ layers[activeTile.groupIndex].tiles[activeTile.tileIndex] };
 			tile = tileControl;
 			textureTransform = tile.textureTransform;
@@ -657,6 +694,7 @@ inline void Map::priv_update() const
 				tile.id = templateTile.id;
 				tile.size.x *= templateTile.size.x;
 				tile.size.y *= templateTile.size.y;
+				tile.expand += templateTile.expand;
 			}
 			tile.position += layers[activeTile.groupIndex].offset;
 			tileDepth = layers[activeTile.groupIndex].depth;
@@ -664,6 +702,7 @@ inline void Map::priv_update() const
 		}
 		break;
 		}
+		texInset += textureTransform.texInset;
 
 		float depthRatio{ 1.f };
 		tileDepth -= m_depthOffset;
@@ -673,10 +712,10 @@ inline void Map::priv_update() const
 		setQuad(
 			m_vertices,
 			startVertex,
-			pointWithDepth(tile.position, depthRatio),
-			pointWithDepth(tile.position + tile.size, depthRatio),
-			textureAtlas[tile.id].position,
-			textureAtlas[tile.id].position + textureAtlas[tile.id].size,
+			pointWithDepth(tile.position - tile.expand, depthRatio),
+			pointWithDepth(tile.position + tile.size + tile.expand, depthRatio),
+			textureAtlas[tile.id].position + texInset,
+			textureAtlas[tile.id].position + textureAtlas[tile.id].size - texInset,
 			color,
 			textureTransform.flipX,
 			textureTransform.flipY,

@@ -47,6 +47,7 @@ struct Tile
 	std::size_t id{ 0u }; // this is the id of the tile (or tile template) to use.
 	sf::Vector2f position{ 0.f, 0.f };
 	sf::Vector2f size{ 1.f, 1.f };
+	sf::Vector2f expand{ 0.f, 0.f };
 	TextureTransform textureTransform;
 };
 
@@ -55,6 +56,7 @@ struct TileTemplate
 	bool isActive{ true }; // this allows all tiles using a tile template to be de-activated as a group (when active, each tile's own active status is used)
 	std::size_t id{ 0u }; // this is the id of the tile
 	sf::Vector2f size{ 1.f, 1.f };
+	sf::Vector2f expand{ 0.f, 0.f };
 };
 
 } // namespace cheesemap
