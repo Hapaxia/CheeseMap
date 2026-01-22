@@ -45,7 +45,7 @@ struct Grid
 {
 	bool isActive{ true };
 	std::size_t zOrder{ 0u };
-	float depth{ 0.f };
+	float depth{ 1.f };
 	sf::Vector2f tileSize{ 1.f, 1.f };
 	sf::Vector2f position{ 0.f, 0.f };
 	std::size_t rowWidth{ 1u };
@@ -53,14 +53,14 @@ struct Grid
 	sf::Vector2f tileExpand{ 0.f, 0.f };
 	std::size_t invisibleId{ 0u };
 	sf::Color color{ sf::Color::White };
-	std::vector<std::size_t> tileIds;
+	std::vector<std::size_t> tileIds{};
 	struct TileTextureTransform
 	{
 		std::size_t tileIndex{ 0u };
 		sf::Vector2f tileExpand{ 0.f, 0.f };
-		TextureTransform textureTransform;
+		TextureTransform textureTransform{};
 	};
-	std::vector<TileTextureTransform> tileTextureTransforms;
+	std::vector<TileTextureTransform> tileTextureTransforms{};
 };
 
 } // namespace cheesemap

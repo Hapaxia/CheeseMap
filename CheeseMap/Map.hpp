@@ -47,7 +47,7 @@
 namespace cheesemap
 {
 
-// Cheese Map v1.2.0
+// Cheese Map v1.2.1
 class Map : public sf::Drawable, public sf::Transformable
 {
 public:
@@ -132,7 +132,7 @@ private:
 	mutable bool m_isUpdateRequired;
 	mutable std::vector<sf::Vertex> m_vertices;
 
-	virtual void draw(sf::RenderTarget&, sf::RenderStates) const;
+	void draw(sf::RenderTarget&, sf::RenderStates) const override;
 
 	void priv_update() const;
 };

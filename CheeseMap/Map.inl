@@ -110,8 +110,13 @@ namespace cheesemap
 {
 
 inline Map::Map()
-	: m_texture{ nullptr }
-	, m_view()
+	: grids{}
+	, layers{}
+	, textureAtlas{}
+	, tileTemplates{}
+
+	, m_texture{ nullptr }
+	, m_view{}
 	, m_depthMultiplier{ 1.f }
 	, m_vanishingPointOffsetFromCenter{ 0.f, 0.f }
 	, m_useRangeZ{ false }
@@ -122,7 +127,7 @@ inline Map::Map()
 	, m_rangeMaxDepth{ 0.f }
 	, m_depthOffset{ 0.f }
 	, m_isUpdateRequired{ false }
-	, m_vertices()
+	, m_vertices{}
 {
 
 }
@@ -137,7 +142,7 @@ inline void Map::update(const sf::View& view)
 	update();
 }
 
-inline void Map::setRangeZ(std::size_t min, std::size_t max)
+inline void Map::setRangeZ(const std::size_t min, const std::size_t max)
 {
 	m_useRangeZ = true;
 	m_rangeMinZ = min;
@@ -145,7 +150,7 @@ inline void Map::setRangeZ(std::size_t min, std::size_t max)
 	update();
 }
 
-inline void Map::setRangeDepth(float min, float max)
+inline void Map::setRangeDepth(const float min, const float max)
 {
 	m_useRangeDepth = true;
 	m_rangeMinDepth = min;
@@ -325,7 +330,7 @@ inline Map::LayerTileId Map::getLayerTileIdAtLocalCoord(sf::Vector2f localCoord)
 			if ((!layer.isActive) || (!(layer.depth < 0.f)))
 				continue;
 
-			sf::Vector2f topLeft{ layer.offset + tile.position };
+			const sf::Vector2f topLeft{ layer.offset + tile.position };
 
 			sf::Vector2f tileSize{ tile.size };
 			if (tile.isTemplate)
@@ -349,7 +354,7 @@ inline Map::LayerTileId Map::getLayerTileIdAtLocalCoord(sf::Vector2f localCoord)
 	}
 
 	if (!tileFound)
-		layerTileId.layerIndex = layers.size();
+		layerTileId.layerIndex = numberOfLayers;
 
 	return layerTileId;
 }
@@ -374,7 +379,7 @@ inline std::vector<Map::LayerTileId> Map::getLayerTileIdsAtLocalCoord(sf::Vector
 			if (!tile.isActive)
 				continue;
 
-			sf::Vector2f topLeft{ layer.offset + tile.position };
+			const sf::Vector2f topLeft{ layer.offset + tile.position };
 
 			sf::Vector2f tileSize{ tile.size };
 			if (tile.isTemplate)
@@ -472,7 +477,6 @@ inline void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 
 	states.transform *= getTransform();
 	states.texture = m_texture;
-	states.shader = nullptr;
 
 	if (m_isUpdateRequired)
 		priv_update();
@@ -503,23 +507,20 @@ inline void Map::priv_update() const
 		sf::Vector2f topRight{ -topLeft.x, topLeft.y };
 
 		const float angle{ m_view.getRotation().asRadians() };
-		const float sin{ std::sin(angle) };
-		const float cos{ std::cos(angle) };
+		const float sine{ std::sin(angle) };
+		const float cosine{ std::cos(angle) };
 
-		rotatePoint(topLeft, cos, sin);
-		rotatePoint(topRight, cos, sin);
+		rotatePoint(topLeft, cosine, sine);
+		rotatePoint(topRight, cosine, sine);
 
 		const sf::Vector2f bottomLeft{ -topRight };
 		const sf::Vector2f bottomRight{ -topLeft };
 
-		sf::Vector2f min{ topLeft }, max{ topLeft };
-		min.x = std::min(std::min(std::min(topLeft.x, topRight.x), bottomLeft.x), bottomRight.x);
-		min.y = std::min(std::min(std::min(topLeft.y, topRight.y), bottomLeft.y), bottomRight.y);
-		max.x = std::max(std::max(std::max(topLeft.x, topRight.x), bottomLeft.x), bottomRight.x);
-		max.y = std::max(std::max(std::max(topLeft.y, topRight.y), bottomLeft.y), bottomRight.y);
-
-		min += viewCenter;
-		max += viewCenter;
+		sf::Vector2f min{ viewCenter }, max{ viewCenter };
+		min.x += std::min(std::min(std::min(topLeft.x, topRight.x), bottomLeft.x), bottomRight.x);
+		min.y += std::min(std::min(std::min(topLeft.y, topRight.y), bottomLeft.y), bottomRight.y);
+		max.x += std::max(std::max(std::max(topLeft.x, topRight.x), bottomLeft.x), bottomRight.x);
+		max.y += std::max(std::max(std::max(topLeft.y, topRight.y), bottomLeft.y), bottomRight.y);
 
 		effectiveViewRectangle = { min, max - min };
 	}
@@ -536,12 +537,12 @@ inline void Map::priv_update() const
 		std::size_t groupIndex; // index of layer or grid
 		std::size_t tileIndex; // index of tile within specific layer or grid
 	};
-	std::vector<TileId> activeTiles;
+	std::vector<TileId> activeTiles{};
 
 	auto pointWithDepth = [&](const sf::Vector2f& p, const float dr) { return ((p - (viewCenter + m_vanishingPointOffsetFromCenter)) * dr) + (viewCenter + m_vanishingPointOffsetFromCenter); };
 	auto pointDepthScale = [&](const sf::Vector2f p, const float dr) { return p * dr; };
 
-	sf::FloatRect tileBounds;
+	sf::FloatRect tileBounds{};
 
 
 
@@ -550,17 +551,18 @@ inline void Map::priv_update() const
 	{
 		const float depth{ layers[l].depth - m_depthOffset };
 
-		if (!layers[l].isActive || (depth < 0.f))
+		if ((!layers[l].isActive) || (depth <= 0.f))
 			continue;
 
-		if (m_useRangeZ && (layers[l].zOrder < m_rangeMinZ || layers[l].zOrder > m_rangeMaxZ))
+		if (m_useRangeZ && ((layers[l].zOrder < m_rangeMinZ) || (layers[l].zOrder > m_rangeMaxZ)))
 			continue;
-		if (m_useRangeDepth && (layers[l].depth < m_rangeMinDepth || layers[l].depth > m_rangeMaxDepth))
+		if (m_useRangeDepth && ((depth < m_rangeMinDepth) || (depth > m_rangeMaxDepth)))
 			continue;
 
 		float depthRatio{ 1.f };
-		if (depth > 0.f)
-			depthRatio = 1.f / (m_depthMultiplier * depth + 1.f);
+		const float adjustedDepth{ m_depthMultiplier * depth };
+		if ((depth > 0.f) && (adjustedDepth != 0.f))
+			depthRatio = 1.f / adjustedDepth;
 
 		for (std::size_t t{ 0u }, numberOfTiles{ layers[l].tiles.size() }; t < numberOfTiles; ++t)
 		{
@@ -596,24 +598,25 @@ inline void Map::priv_update() const
 	{
 		const float depth{ grids[g].depth - m_depthOffset };
 
-		if (!grids[g].isActive || depth < 0.f)
+		if ((!grids[g].isActive) || (depth <= 0.f))
 			continue;
 
 		if (m_useRangeZ && (grids[g].zOrder < m_rangeMinZ || grids[g].zOrder > m_rangeMaxZ))
 			continue;
-		if (m_useRangeDepth && (grids[g].depth < m_rangeMinDepth || grids[g].depth > m_rangeMaxDepth))
+		if (m_useRangeDepth && (depth < m_rangeMinDepth || depth > m_rangeMaxDepth))
 			continue;
 
 		float depthRatio{ 1.f };
-		if (depth > 0.f)
-			depthRatio = 1.f / (m_depthMultiplier * depth + 1.f);
+		const float adjustedDepth{ m_depthMultiplier * depth };
+		if ((depth > 0.f) && (adjustedDepth != 0.f))
+			depthRatio = 1.f / adjustedDepth;
 
 		for (std::size_t t{ 0u }, numberOfTiles{ grids[g].tileIds.size() }; t < numberOfTiles; ++t)
 		{
-			sf::Vector2<std::size_t> tileLocation(t % grids[g].rowWidth, t / grids[g].rowWidth);
-			tileBounds = { { grids[g].position.x + tileLocation.x * grids[g].tileSize.x, grids[g].position.y + tileLocation.y * grids[g].tileSize.y }, grids[g].tileSize };
+			sf::Vector2<std::size_t> tileLocation{ t % grids[g].rowWidth, t / grids[g].rowWidth };
+			tileBounds = { { grids[g].position.x + (tileLocation.x * grids[g].tileSize.x), grids[g].position.y + (tileLocation.y * grids[g].tileSize.y) }, grids[g].tileSize };
 			tileBounds = { pointWithDepth(tileBounds.position, depthRatio), pointDepthScale(tileBounds.size, depthRatio) };
-			const bool isTileWithinRange{  };
+			//const bool isTileWithinRange{  };
 
 			if ((grids[g].tileIds[t] != grids[g].invisibleId) && effectiveViewRectangle.findIntersection(tileBounds) && (grids[g].tileIds[t] < numberOfTextureAtlasRectangle))
 				activeTiles.push_back({ TileId::GroupType::Grid, g, t });
@@ -621,9 +624,8 @@ inline void Map::priv_update() const
 	}
 
 	// sort active tiles by z, regardless of if it's a layer or grid
-	std::sort(activeTiles.begin(), activeTiles.end(), [&](TileId lhs, TileId rhs)
+	std::sort(activeTiles.begin(), activeTiles.end(), [&](const TileId lhs, const TileId rhs)
 		{
-
 			std::size_t left{ 0u }, right{ 0u };
 			switch (lhs.groupType)
 			{
@@ -645,18 +647,19 @@ inline void Map::priv_update() const
 				right = layers[rhs.groupIndex].zOrder;
 				break;
 			}
-			return left < right;
+			return (left < right);
 		});
 
 	// build vertex array
-	m_vertices.resize(activeTiles.size() * 6u);
+	constexpr std::size_t numOfVerticesPerQuad{ 6u };
+	m_vertices.resize(activeTiles.size() * numOfVerticesPerQuad);
 	std::size_t startVertex{ 0u };
 	for (auto& activeTile : activeTiles)
 	{
 		float tileDepth{ 0.f };
-		Tile tile;
-		TextureTransform textureTransform;
-		sf::Color color;
+		Tile tile{};
+		TextureTransform textureTransform{};
+		sf::Color color{};
 		sf::Vector2f texInset{};
 		switch (activeTile.groupType)
 		{
@@ -680,7 +683,7 @@ inline void Map::priv_update() const
 			}
 			color = grids[activeTile.groupIndex].color;
 		}
-		break;
+			break;
 		default:
 		case TileId::GroupType::Layer:
 		{
@@ -700,14 +703,15 @@ inline void Map::priv_update() const
 			tileDepth = layers[activeTile.groupIndex].depth;
 			color = layers[activeTile.groupIndex].color;
 		}
-		break;
+			break;
 		}
 		texInset += textureTransform.texInset;
 
 		float depthRatio{ 1.f };
 		tileDepth -= m_depthOffset;
-		if (tileDepth > 0.f)
-			depthRatio = 1.f / (m_depthMultiplier * tileDepth + 1.f);
+		const float adjustedDepth{ m_depthMultiplier * tileDepth };
+		if ((tileDepth > 0.f) && (adjustedDepth != 0.f))
+			depthRatio = 1.f / adjustedDepth;
 
 		setQuad(
 			m_vertices,
@@ -720,7 +724,7 @@ inline void Map::priv_update() const
 			textureTransform.flipX,
 			textureTransform.flipY,
 			textureTransform.turn);
-		startVertex += 6u;
+		startVertex += numOfVerticesPerQuad;
 	}
 }
 

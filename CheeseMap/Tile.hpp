@@ -48,7 +48,7 @@ struct Tile
 	sf::Vector2f position{ 0.f, 0.f };
 	sf::Vector2f size{ 1.f, 1.f };
 	sf::Vector2f expand{ 0.f, 0.f };
-	TextureTransform textureTransform;
+	TextureTransform textureTransform{};
 };
 
 struct TileTemplate

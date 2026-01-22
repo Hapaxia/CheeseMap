@@ -44,7 +44,7 @@ class Exception : public std::exception
 {
 public:
 	Exception(const std::string& errorMessage = "Unknown error.") : m_errorMessage("[CHI-ZUCHIZU] " + errorMessage) { }
-	virtual const char* what() const noexcept override { return m_errorMessage.c_str(); }
+	const char* what() const noexcept override { return m_errorMessage.c_str(); }
 
 private:
 	std::string m_errorMessage;
