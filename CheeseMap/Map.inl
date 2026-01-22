@@ -36,76 +36,6 @@
 
 #include <cmath>
 
-namespace
-{
-
-inline void setQuad
-(
-	std::vector<sf::Vertex>& vertices,
-	const std::size_t startVertex,
-	const sf::Vector2f topLeft,
-	const sf::Vector2f bottomRight,
-	sf::Vector2f textureTopLeft,
-	sf::Vector2f textureBottomRight,
-	const sf::Color color,
-	const bool flipX,
-	const bool flipY,
-	const bool turn
-)
-{
-	if (flipX)
-	{
-		const float left{ textureTopLeft.x };
-		textureTopLeft.x = textureBottomRight.x;
-		textureBottomRight.x = left;
-	}
-	if (flipY)
-	{
-		const float top{ textureTopLeft.y };
-		textureTopLeft.y = textureBottomRight.y;
-		textureBottomRight.y = top;
-	}
-
-	vertices[startVertex + 0u].position = topLeft;
-	vertices[startVertex + 1u].position = { topLeft.x, bottomRight.y };
-	vertices[startVertex + 2u].position = { bottomRight.x, topLeft.y };
-	vertices[startVertex + 3u].position = vertices[startVertex + 2u].position;
-	vertices[startVertex + 4u].position = vertices[startVertex + 1u].position;
-	vertices[startVertex + 5u].position = bottomRight;
-
-	vertices[startVertex + 0u].texCoords = textureTopLeft;
-	vertices[startVertex + 1u].texCoords = { textureTopLeft.x, textureBottomRight.y };
-	vertices[startVertex + 2u].texCoords = { textureBottomRight.x, textureTopLeft.y };
-	vertices[startVertex + 3u].texCoords = vertices[startVertex + 2u].texCoords;
-	vertices[startVertex + 4u].texCoords = vertices[startVertex + 1u].texCoords;
-	vertices[startVertex + 5u].texCoords = textureBottomRight;
-
-	if (turn)
-	{
-		//  --------       --------
-		// | 0  2,3 | --> | 2,3  5 |
-		// |        |     |        |
-		// | 1,4  5 | --> | 0  1,4 |
-		//  --------       --------
-
-		vertices[startVertex + 1u].texCoords = vertices[startVertex + 5u].texCoords;
-		vertices[startVertex + 2u].texCoords = vertices[startVertex + 0u].texCoords;
-		vertices[startVertex + 0u].texCoords = vertices[startVertex + 4u].texCoords;
-		vertices[startVertex + 5u].texCoords = vertices[startVertex + 3u].texCoords;
-		vertices[startVertex + 3u].texCoords = vertices[startVertex + 2u].texCoords;
-		vertices[startVertex + 4u].texCoords = vertices[startVertex + 1u].texCoords;
-	}
-
-	vertices[startVertex + 0u].color = color;
-	vertices[startVertex + 1u].color = color;
-	vertices[startVertex + 2u].color = color;
-	vertices[startVertex + 3u].color = color;
-	vertices[startVertex + 4u].color = color;
-	vertices[startVertex + 5u].color = color;
-}
-
-} // namespace
-
 namespace cheesemap
 {
 
@@ -136,6 +66,7 @@ inline void Map::update()
 {
 	m_isUpdateRequired = true;
 }
+
 inline void Map::update(const sf::View& view)
 {
 	m_view = view;
@@ -713,8 +644,7 @@ inline void Map::priv_update() const
 		if ((tileDepth > 0.f) && (adjustedDepth != 0.f))
 			depthRatio = 1.f / adjustedDepth;
 
-		setQuad(
-			m_vertices,
+		priv_setQuad(
 			startVertex,
 			pointWithDepth(tile.position - tile.expand, depthRatio),
 			pointWithDepth(tile.position + tile.size + tile.expand, depthRatio),
@@ -726,6 +656,70 @@ inline void Map::priv_update() const
 			textureTransform.turn);
 		startVertex += numOfVerticesPerQuad;
 	}
+}
+
+inline void Map::priv_setQuad
+(
+	const std::size_t startVertex,
+	const sf::Vector2f topLeft,
+	const sf::Vector2f bottomRight,
+	sf::Vector2f textureTopLeft,
+	sf::Vector2f textureBottomRight,
+	const sf::Color color,
+	const bool flipX,
+	const bool flipY,
+	const bool turn
+) const
+{
+	if (flipX)
+	{
+		const float left{ textureTopLeft.x };
+		textureTopLeft.x = textureBottomRight.x;
+		textureBottomRight.x = left;
+	}
+	if (flipY)
+	{
+		const float top{ textureTopLeft.y };
+		textureTopLeft.y = textureBottomRight.y;
+		textureBottomRight.y = top;
+	}
+
+	m_vertices[startVertex + 0u].position = topLeft;
+	m_vertices[startVertex + 1u].position = { topLeft.x, bottomRight.y };
+	m_vertices[startVertex + 2u].position = { bottomRight.x, topLeft.y };
+	m_vertices[startVertex + 3u].position = m_vertices[startVertex + 2u].position;
+	m_vertices[startVertex + 4u].position = m_vertices[startVertex + 1u].position;
+	m_vertices[startVertex + 5u].position = bottomRight;
+
+	m_vertices[startVertex + 0u].texCoords = textureTopLeft;
+	m_vertices[startVertex + 1u].texCoords = { textureTopLeft.x, textureBottomRight.y };
+	m_vertices[startVertex + 2u].texCoords = { textureBottomRight.x, textureTopLeft.y };
+	m_vertices[startVertex + 3u].texCoords = m_vertices[startVertex + 2u].texCoords;
+	m_vertices[startVertex + 4u].texCoords = m_vertices[startVertex + 1u].texCoords;
+	m_vertices[startVertex + 5u].texCoords = textureBottomRight;
+
+	if (turn)
+	{
+		//  --------       --------
+		// | 0  2,3 | --> | 2,3  5 |
+		// |        |     |        |
+		// | 1,4  5 | --> | 0  1,4 |
+		//  --------       --------
+
+		m_vertices[startVertex + 1u].texCoords = m_vertices[startVertex + 5u].texCoords;
+		m_vertices[startVertex + 2u].texCoords = m_vertices[startVertex + 0u].texCoords;
+		m_vertices[startVertex + 0u].texCoords = m_vertices[startVertex + 4u].texCoords;
+		m_vertices[startVertex + 5u].texCoords = m_vertices[startVertex + 3u].texCoords;
+		m_vertices[startVertex + 3u].texCoords = m_vertices[startVertex + 2u].texCoords;
+		m_vertices[startVertex + 4u].texCoords = m_vertices[startVertex + 1u].texCoords;
+	}
+
+	m_vertices[startVertex + 0u].color = color;
+	m_vertices[startVertex + 1u].color = color;
+	m_vertices[startVertex + 2u].color = color;
+	m_vertices[startVertex + 3u].color = color;
+	m_vertices[startVertex + 4u].color = color;
+	m_vertices[startVertex + 5u].color = color;
 }
 
 } // namespace cheesemap

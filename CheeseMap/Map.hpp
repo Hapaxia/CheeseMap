@@ -47,7 +47,7 @@
 namespace cheesemap
 {
 
-// Cheese Map v1.2.1
+// Cheese Map v1.2.2
 class Map : public sf::Drawable, public sf::Transformable
 {
 public:
@@ -135,8 +135,18 @@ private:
 	void draw(sf::RenderTarget&, sf::RenderStates) const override;
 
 	void priv_update() const;
+	void priv_setQuad(
+		const std::size_t startVertex,
+		const sf::Vector2f topLeft,
+		const sf::Vector2f bottomRight,
+		sf::Vector2f textureTopLeft,
+		sf::Vector2f textureBottomRight,
+		const sf::Color color,
+		const bool flipX,
+		const bool flipY,
+		const bool turn
+	) const;
 };
 
 } // namespace cheesemap
-
 #include "Map.inl"
