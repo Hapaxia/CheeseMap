@@ -3,7 +3,7 @@
 Welcome to Cheese Map!  
 by [Hapaxia](http://github.com/Hapaxia)
 
-For more information, see [the Cheese Map Wiki](https://github.com/Hapaxia/CheeseMap/wiki).
+For more information, including tutorials, see [the Cheese Map Wiki](https://github.com/Hapaxia/CheeseMap/wiki).
 
 ## Introduction
 Cheese Map is a drawable layered tile map for [SFML], designed to simplify drawing most 2D maps.
