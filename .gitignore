@@ -22,6 +22,8 @@
 priv*.*
 priv_*.*
 wiki_*.*
+tutorial*.*
+_tutorial*.*
 
 licence for header.txt
 
