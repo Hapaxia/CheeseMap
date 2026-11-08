@@ -365,6 +365,23 @@ inline bool Map::doesGridBoundsContainCoord(const std::size_t gridIndex, const s
 	return !((localCoord.x < topLeft.x) || (localCoord.y < topLeft.y) || (localCoord.x >= bottomRight.x) || (localCoord.y >= bottomRight.y));
 }
 
+inline sf::Vector2f Map::getGridLocationAtLocalCoord(const std::size_t gridIndex, const sf::Vector2f localCoord) const
+{
+	const std::size_t numberOfGrids{ grids.size() };
+	if ((numberOfGrids == 0u) || (gridIndex >= numberOfGrids))
+		return{};
+
+	const Grid& grid{ grids[gridIndex] };
+
+	return (localCoord - grid.position).componentWiseDiv(grid.tileSize);
+}
+
+inline sf::Vector2i Map::getGridLocationAtLocalCoordInt(const std::size_t gridIndex, const sf::Vector2f localCoord) const
+{
+	const sf::Vector2f gridLocation{ getGridLocationAtLocalCoord(gridIndex, localCoord) };
+	return{ static_cast<int>(llround(std::floor(gridLocation.x))), static_cast<int>(llround(std::floor(gridLocation.y))) };
+}
+
 
 
 

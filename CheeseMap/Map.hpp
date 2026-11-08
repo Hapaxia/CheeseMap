@@ -47,12 +47,8 @@
 namespace cheesemap
 {
 
-// Cheese Map v1.2.3
+// Cheese Map v1.3
 
-	// 1.2.3
-	// FIXED
-	// - now draw() will use the texture provided in RenderStates, if one is provided, otherwise will resort back to using internal texture
-	// - variable name corrected: numberOfTextureAtlasRectangles instead of numberOfTextureAtlasRectangle
 
 class Map : public sf::Drawable, public sf::Transformable
 {
@@ -107,6 +103,9 @@ public:
 	std::size_t getGridHeight(std::size_t gridIndex) const;
 
 	bool doesGridBoundsContainCoord(std::size_t gridIndex, sf::Vector2f localCoord) const;
+
+	sf::Vector2f getGridLocationAtLocalCoord(std::size_t gridIndex, sf::Vector2f localCoord) const;
+	sf::Vector2i getGridLocationAtLocalCoordInt(std::size_t gridIndex, sf::Vector2f localCoord) const;
 
 
 
