@@ -403,11 +403,16 @@ inline bool Map::doesGridBoundsContainCoord(const std::size_t gridIndex, const s
 
 inline void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-	if (m_texture == nullptr)
-		return;
+	// now allows texture to be specified via states; if not, internal texture will be used, otherwise will not draw (or update) anything
+	if (states.texture == nullptr)
+	{
+		if (m_texture == nullptr)
+			return;
+		else
+			states.texture = m_texture;
+	}
 
 	states.transform *= getTransform();
-	states.texture = m_texture;
 
 	if (m_isUpdateRequired)
 		priv_update();
@@ -421,7 +426,7 @@ inline void Map::priv_update() const
 
 
 
-	const std::size_t numberOfTextureAtlasRectangle{ textureAtlas.size() };
+	const std::size_t numberOfTextureAtlasRectangles{ textureAtlas.size() };
 
 	const sf::Vector2f viewCenter{ m_view.getCenter() };
 	const sf::Vector2f viewSize{ m_view.getSize() };
@@ -504,13 +509,13 @@ inline void Map::priv_update() const
 			if (!layers[l].tiles[t].isTemplate)
 			{
 				tileBounds = { layers[l].tiles[t].position + layers[l].offset, layers[l].tiles[t].size };
-				if (layers[l].tiles[t].id < numberOfTextureAtlasRectangle)
+				if (layers[l].tiles[t].id < numberOfTextureAtlasRectangles)
 					isAnActiveTile = true;
 			}
 			else if (tileTemplates[layers[l].tiles[t].id].isActive)
 			{
 				tileBounds = { layers[l].tiles[t].position + layers[l].offset, { layers[l].tiles[t].size.x * tileTemplates[layers[l].tiles[t].id].size.x, layers[l].tiles[t].size.y * tileTemplates[layers[l].tiles[t].id].size.y } };
-				if (tileTemplates[layers[l].tiles[t].id].id < numberOfTextureAtlasRectangle)
+				if (tileTemplates[layers[l].tiles[t].id].id < numberOfTextureAtlasRectangles)
 					isAnActiveTile = true;
 			}
 
@@ -549,7 +554,7 @@ inline void Map::priv_update() const
 			tileBounds = { pointWithDepth(tileBounds.position, depthRatio), pointDepthScale(tileBounds.size, depthRatio) };
 			//const bool isTileWithinRange{  };
 
-			if ((grids[g].tileIds[t] != grids[g].invisibleId) && effectiveViewRectangle.findIntersection(tileBounds) && (grids[g].tileIds[t] < numberOfTextureAtlasRectangle))
+			if ((grids[g].tileIds[t] != grids[g].invisibleId) && effectiveViewRectangle.findIntersection(tileBounds) && (grids[g].tileIds[t] < numberOfTextureAtlasRectangles))
 				activeTiles.push_back({ TileId::GroupType::Grid, g, t });
 		}
 	}

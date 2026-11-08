@@ -47,7 +47,13 @@
 namespace cheesemap
 {
 
-// Cheese Map v1.2.2
+// Cheese Map v1.2.3
+
+	// 1.2.3
+	// FIXED
+	// - now draw() will use the texture provided in RenderStates, if one is provided, otherwise will resort back to using internal texture
+	// - variable name corrected: numberOfTextureAtlasRectangles instead of numberOfTextureAtlasRectangle
+
 class Map : public sf::Drawable, public sf::Transformable
 {
 public:
